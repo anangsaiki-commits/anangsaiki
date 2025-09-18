@@ -12,10 +12,10 @@ const veoPromptSchema = {
     style: { type: Type.STRING, description: "The visual style. Examples: 'cinematic', 'anime', 'hyperrealistic', 'watercolor', '3D animation', 'vintage film'." },
     tone: { type: Type.STRING, description: "The emotional tone of the video. Examples: 'dramatic', 'comedic', 'mysterious', 'epic', 'serene', 'suspenseful'." },
     camera: { type: Type.STRING, description: "The type of camera to simulate. Examples: 'DSLR', '8mm film', 'drone', 'security camera', 'handheld'." },
-    motion: { type: Type.STRING, description: "The primary camera movement. Examples: 'slow pan left', 'dolly zoom', 'fast tracking shot', 'static', 'whip pan'." },
+    motion: { type: Type.STRING, description: "The primary camera movement. This should be based on the user's preference if provided, otherwise inferred from the context. Examples: 'slow pan left', 'dolly zoom', 'fast tracking shot', 'static', 'whip pan'." },
     angle: { type: Type.STRING, description: "The camera angle. Examples: 'low angle', 'high angle', 'eye-level', 'dutch angle', 'bird's eye view'." },
     lens: { type: Type.STRING, description: "The type of lens to simulate. Examples: 'wide-angle', 'telephoto', 'macro', 'fisheye'." },
-    lighting: { type: Type.STRING, description: "The lighting style. Examples: 'golden hour', 'neon noir', 'soft studio lighting', 'moonlight', 'dramatic shadows'. This should be based on the user's preference if provided, otherwise inferred from the context." },
+    lighting: { type: Type.STRING, description: "The lighting style. Examples: 'golden hour', 'neon noir', 'soft studio lighting', 'moonlight', 'dramatic shadows'." },
     audio: { type: Type.STRING, description: "Sound design, music, or dialogue. This should integrate the timed dialogue provided by the user. Examples: 'epic orchestral score and character speaks: \"Follow me!\"', 'ambient nature sounds'." },
     setting: { type: Type.STRING, description: "The general environment or setting. Examples: 'futuristic cityscape', 'enchanted forest', 'post-apocalyptic wasteland'." },
     place: { type: Type.STRING, description: "The specific location within the setting. Examples: 'a neon-lit noodle bar', 'a moss-covered ancient ruin', 'an abandoned subway station'." },
@@ -46,14 +46,14 @@ interface TimedDialogue {
 interface VeoPromptInput {
   actions: Action[];
   timedDialogues: TimedDialogue[];
-  lighting: string;
+  cameraMovement: string;
   image?: {
     data: string; // base64 encoded string
     mimeType: string;
   }
 }
 
-export const generateVeoPrompt = async ({ actions, timedDialogues, image, lighting }: VeoPromptInput): Promise<string> => {
+export const generateVeoPrompt = async ({ actions, timedDialogues, image, cameraMovement }: VeoPromptInput): Promise<string> => {
   if (!process.env.API_KEY) {
     throw new Error("API key is missing. Please set the API_KEY environment variable.");
   }
@@ -94,8 +94,8 @@ export const generateVeoPrompt = async ({ actions, timedDialogues, image, lighti
   }
 
 
-  if (lighting.trim()) {
-    parts.push({ text: `LIGHTING PREFERENCE: ${lighting}` });
+  if (cameraMovement && cameraMovement !== 'Automatic') {
+    parts.push({ text: `CAMERA MOVEMENT PREFERENCE: ${cameraMovement}` });
   }
 
   let systemInstruction = `You are an expert prompt engineer for the Gemini Veo video generation model. Your task is to analyze the provided timelines, image, and preferences, and break them down into a structured JSON format suitable for Veo. Adhere strictly to the provided JSON schema.
@@ -105,7 +105,7 @@ IMPORTANT LANGUAGE RULES:
 OTHER RULES:
 - You MUST use the 'ACTION TIMELINE' and 'DIALOGUE TIMELINE' to structure the 'plot_point' and overall 'prompt'.
 - The 'duration_second' field in the JSON MUST be set to the latest end time found across both timelines.
-- If a 'LIGHTING PREFERENCE' is provided, you MUST use it as the primary source for the 'lighting' field. Otherwise, infer the best lighting from the context.
+- If a 'CAMERA MOVEMENT PREFERENCE' is provided, you MUST use it as the primary source for the 'motion' field. Otherwise, infer the best camera motion from the context.
 - The 'audio' field should accurately incorporate the Indonesian dialogue from the 'DIALOGUE TIMELINE' along with any other implied sounds.`;
   
   try {

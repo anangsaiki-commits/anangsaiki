@@ -67,17 +67,14 @@ const App: React.FC = () => {
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imageMimeType, setImageMimeType] = useState<string | null>(null);
-  
-  const [lightingOption, setLightingOption] = useState<'spotlight' | 'custom' | 'none'>('none');
-  const [selectedSpotlight, setSelectedSpotlight] = useState<string>('Golden Hour');
-  const [customLighting, setCustomLighting] = useState<string>('');
+  const [selectedCameraSpotlight, setSelectedCameraSpotlight] = useState<string>('Automatic');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const spotlightOptions = [
-    "Golden Hour", "Blue Hour", "Neon Noir", "Rembrandt Lighting", "Split Lighting", 
-    "High-key", "Low-key", "Cinematic Backlight", "Moonlight", "Underwater Caustics", 
-    "Volumetric Light", "Hard Sunlight", "Soft Studio Lighting"
+  const cameraSpotlightOptions = [
+    "Automatic", "Point up", "Point down", "Point right", "Point left",
+    "Point closer", "Point away", "Swipe right", "Swipe left", "Tilt up",
+    "Tilt down", "Rotate right", "Rotate left", "Static"
   ];
 
   const handleActionChange = (index: number, field: keyof Action, value: string) => {
@@ -156,19 +153,12 @@ const App: React.FC = () => {
     setError('');
     setGeneratedJson('');
 
-    let lightingInstruction = '';
-    if (lightingOption === 'spotlight') {
-      lightingInstruction = selectedSpotlight;
-    } else if (lightingOption === 'custom' && customLighting.trim()) {
-      lightingInstruction = customLighting;
-    }
-
     try {
       const result = await generateVeoPrompt({
         actions,
         timedDialogues,
         image: imageBase64 && imageMimeType ? { data: imageBase64, mimeType: imageMimeType } : undefined,
-        lighting: lightingInstruction,
+        cameraMovement: selectedCameraSpotlight,
       });
       setGeneratedJson(result);
     } catch (err: unknown) {
@@ -180,7 +170,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [actions, timedDialogues, imageBase64, imageMimeType, lightingOption, selectedSpotlight, customLighting]);
+  }, [actions, timedDialogues, imageBase64, imageMimeType, selectedCameraSpotlight]);
 
   const handleCopy = useCallback(() => {
     if (!generatedJson) return;
@@ -349,42 +339,16 @@ const App: React.FC = () => {
                 </div>
                 <div>
                     <label className="block text-lg font-medium text-gem-silver mb-2">
-                      Camera Lighting Options
+                      Camera Spotlight
                     </label>
-                    <div role="radiogroup" aria-label="Lighting Options" className="flex items-center gap-6 mb-3">
-                        <label className="flex items-center gap-2 cursor-pointer text-sm text-gem-silver">
-                            <input type="radio" name="lightingOption" value="none" checked={lightingOption === 'none'} onChange={() => setLightingOption('none')} className="w-4 h-4 text-gem-sky bg-gem-onyx border-gray-500 focus:ring-gem-sky focus:ring-2" />
-                            None
-                        </label>
-                         <label className="flex items-center gap-2 cursor-pointer text-sm text-gem-silver">
-                            <input type="radio" name="lightingOption" value="spotlight" checked={lightingOption === 'spotlight'} onChange={() => setLightingOption('spotlight')} className="w-4 h-4 text-gem-sky bg-gem-onyx border-gray-500 focus:ring-gem-sky focus:ring-2" />
-                            Full Spotlight
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer text-sm text-gem-silver">
-                            <input type="radio" name="lightingOption" value="custom" checked={lightingOption === 'custom'} onChange={() => setLightingOption('custom')} className="w-4 h-4 text-gem-sky bg-gem-onyx border-gray-500 focus:ring-gem-sky focus:ring-2" />
-                            Custom
-                        </label>
-                    </div>
-                    {lightingOption === 'spotlight' && (
-                      <select
-                        value={selectedSpotlight}
-                        onChange={(e) => setSelectedSpotlight(e.target.value)}
+                    <select
+                        value={selectedCameraSpotlight}
+                        onChange={(e) => setSelectedCameraSpotlight(e.target.value)}
                         className="w-full p-3 bg-gem-onyx border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-gem-sky focus:border-gem-sky transition-colors duration-200"
-                        aria-label="Select spotlight style"
-                      >
-                        {spotlightOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </select>
-                    )}
-                    {lightingOption === 'custom' && (
-                      <textarea
-                        value={customLighting}
-                        onChange={(e) => setCustomLighting(e.target.value)}
-                        placeholder="Describe your custom lighting style here... (e.g., 'flickering candlelight from the left side')"
-                        className="w-full p-3 bg-gem-onyx border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-gem-sky focus:border-gem-sky transition-colors duration-200 resize-y"
-                        rows={2}
-                        aria-label="Custom lighting input"
-                      />
-                    )}
+                        aria-label="Select camera spotlight style"
+                    >
+                        {cameraSpotlightOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
                 </div>
             </div>
         </div>
