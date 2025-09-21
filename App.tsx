@@ -68,6 +68,8 @@ const App: React.FC = () => {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imageMimeType, setImageMimeType] = useState<string | null>(null);
   const [selectedCameraSpotlight, setSelectedCameraSpotlight] = useState<string>('Automatic');
+  const [selectedTone, setSelectedTone] = useState<string>('Automatic');
+  const [customTone, setCustomTone] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,6 +77,11 @@ const App: React.FC = () => {
     "Automatic", "Point up", "Point down", "Point right", "Point left",
     "Point closer", "Point away", "Swipe right", "Swipe left", "Tilt up",
     "Tilt down", "Rotate right", "Rotate left", "Static"
+  ];
+
+  const toneOptions = [
+    "Automatic", "Scream", "Dramatic", "Comedic", "Mysterious",
+    "Epic", "Serene", "Suspenseful", "Singing", "Custom"
   ];
 
   const handleActionChange = (index: number, field: keyof Action, value: string) => {
@@ -153,12 +160,15 @@ const App: React.FC = () => {
     setError('');
     setGeneratedJson('');
 
+    const finalTone = selectedTone === 'Custom' ? customTone : selectedTone;
+
     try {
       const result = await generateVeoPrompt({
         actions,
         timedDialogues,
         image: imageBase64 && imageMimeType ? { data: imageBase64, mimeType: imageMimeType } : undefined,
         cameraMovement: selectedCameraSpotlight,
+        tone: finalTone,
       });
       setGeneratedJson(result);
     } catch (err: unknown) {
@@ -170,7 +180,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [actions, timedDialogues, imageBase64, imageMimeType, selectedCameraSpotlight]);
+  }, [actions, timedDialogues, imageBase64, imageMimeType, selectedCameraSpotlight, selectedTone, customTone]);
 
   const handleCopy = useCallback(() => {
     if (!generatedJson) return;
@@ -336,6 +346,29 @@ const App: React.FC = () => {
                     <button onClick={addDialogue} className="mt-3 text-sm text-gem-sky hover:text-sky-400 font-semibold">
                         + Add Dialogue
                     </button>
+                </div>
+                <div>
+                    <label className="block text-lg font-medium text-gem-silver mb-2">
+                      Emotional Tone
+                    </label>
+                    <select
+                        value={selectedTone}
+                        onChange={(e) => setSelectedTone(e.target.value)}
+                        className="w-full p-3 bg-gem-onyx border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-gem-sky focus:border-gem-sky transition-colors duration-200"
+                        aria-label="Select emotional tone"
+                    >
+                        {toneOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                    {selectedTone === 'Custom' && (
+                        <input
+                            type="text"
+                            value={customTone}
+                            onChange={(e) => setCustomTone(e.target.value)}
+                            placeholder="Enter custom tone..."
+                            className="w-full mt-2 p-3 bg-gem-onyx border-2 border-gray-600 rounded-md focus:ring-2 focus:ring-gem-sky focus:border-gem-sky transition-colors duration-200"
+                            aria-label="Custom emotional tone"
+                        />
+                    )}
                 </div>
                 <div>
                     <label className="block text-lg font-medium text-gem-silver mb-2">
